@@ -1,0 +1,122 @@
+@page "/pagos/nuevo"
+@page "/pagos/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorioPagos Repositorio
+@inject IRepositorioEventos RepositorioEventos
+@inject NavigationManager Navigation
+
+@if (_error)
+{
+    <div class="alert alert-danger">
+        <h2>El pago que intenta editar no se encuentra registrado</h2>
+    </div>
+    <button class="btn btn-danger" @onclick="Regresar">Regresar</button>
+}
+else
+{
+    <EditForm Model="_pago" FormName="frmPago" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <div class="row align-items-center">
+            <div class="col col-2">
+                <label class="col-form-label">Estado</label>
+            </div>
+            <div class="col col-10">
+                <InputRadioGroup TValue="string" @bind-Value="_pago.Estado">
+                    <div class="form-check form-check-inline">
+                        <InputRadio TValue="string" Value="@("Pendiente")" class="form-check-input" id="rPendiente" />
+                        <label class="form-check-label" for="rPendiente">Pendiente</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <InputRadio TValue="string" Value="@("Pagado")" class="form-check-input" id="rPagado" />
+                        <label class="form-check-label" for="rPagado">Pagado</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <InputRadio TValue="string" Value="@("Cancelado")" class="form-check-input" id="rCancelado" />
+                        <label class="form-check-label" for="rCancelado">Cancelado</label>
+                    </div>
+                </InputRadioGroup>
+                <ValidationMessage For="@(() => _pago.Estado)" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtMontoTotal" class="col-form-label">Monto total</label>
+            </div>
+            <div class="col col-10">
+                <InputNumber class="form-control" id="txtMontoTotal" @bind-Value="_pago.MontoTotal" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtAnticipo" class="col-form-label">Anticipo</label>
+            </div>
+            <div class="col col-10">
+                <InputNumber class="form-control" id="txtAnticipo" @bind-Value="_pago.Anticipo" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="ddlEvento" class="col-form-label">Evento</label>
+            </div>
+            <div class="col col-10">
+                <InputSelect class="form-select" id="ddlEvento" @bind-Value="_pago.EventoId">
+                    <option value="0">Seleccione un evento</option>
+                    @foreach (var evento in _eventos)
+                    {
+                        <option value="@evento.Id">@evento.TipoEvento — @evento.Fecha.ToShortDateString()</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <button class="btn btn-primary me-3" type="submit">Guardar</button>
+                <button class="btn btn-danger" @onclick="Regresar">Cancelar</button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Pago _pago = new();
+    private bool _error = false;
+    private List<Evento> _eventos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _eventos = await RepositorioEventos.ObtenerEventos();
+
+        if (Id > 0)
+        {
+            var pago = await Repositorio.ObtenerPagoPorId(Id);
+            if (pago != null)
+            {
+                _pago = pago;
+            }
+            else
+            {
+                _error = true;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id > 0)
+        {
+            await Repositorio.ActualizarPago(Id, _pago);
+        }
+        else
+        {
+            await Repositorio.AgregarPago(_pago);
+        }
+        Navigation.NavigateTo("/pagos");
+    }
+
+    private void Regresar()
+    {
+        Navigation.NavigateTo("/pagos");
+    }
+}

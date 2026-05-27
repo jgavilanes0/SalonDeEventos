@@ -1,0 +1,53 @@
+@page "/clientes"
+@rendermode InteractiveServer
+@inject IRepositorioClientes Repositorio
+@inject NavigationManager Navigation
+<PageTitle>Clientes</PageTitle>
+<h3>Listado de clientes</h3>
+<button class="btn btn-primary mb-3" @onclick="@(() => Navigation.NavigateTo("/clientes/nuevo"))">Nuevo cliente</button>
+
+@if (_clientes == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else if (_clientes.Count == 0)
+{
+    <div class="alert alert-info">
+        <h2>No se encuentran registrados clientes</h2>
+    </div>
+}
+else
+{
+    <QuickGrid Items="_clientes.AsQueryable()" Class="table table-striped" Pagination="_paginationState">
+        <PropertyColumn Property="@(c => c.NombreFestejado)" Title="Nombre del festejado" Sortable="true" />
+        <PropertyColumn Property="@(c => c.Telefono)" />
+        <TemplateColumn Title="Acciones">
+            <button class="btn btn-outline-secondary" @onclick="@(() => Eliminar(context))">Eliminar</button>
+            <button class="btn btn-outline-primary" @onclick="@(() => Editar(context))">Editar</button>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="_paginationState" />
+}
+
+@code {
+    private List<Cliente>? _clientes;
+    private PaginationState _paginationState = new PaginationState { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _clientes = await Repositorio.ObtenerClientes();
+    }
+
+    private void Editar(Cliente cliente)
+    {
+        Navigation.NavigateTo($"/clientes/editar/{cliente.Id}");
+    }
+
+    private async Task Eliminar(Cliente cliente)
+    {
+        await Repositorio.EliminarCliente(cliente.Id);
+        _clientes = await Repositorio.ObtenerClientes();
+    }
+}

@@ -1,0 +1,54 @@
+@page "/sedes"
+@rendermode InteractiveServer
+@inject IRepositorioSedes Repositorio
+@inject NavigationManager Navigation
+<PageTitle>Sedes</PageTitle>
+<h3>Listado de sedes</h3>
+<button class="btn btn-primary mb-3" @onclick="@(() => Navigation.NavigateTo("/sedes/nueva"))">Nueva sede</button>
+
+@if (_sedes == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else if (_sedes.Count == 0)
+{
+    <div class="alert alert-info">
+        <h2>No se encuentran registradas sedes</h2>
+    </div>
+}
+else
+{
+    <QuickGrid Items="_sedes.AsQueryable()" Class="table table-striped" Pagination="_paginationState">
+        <PropertyColumn Property="@(s => s.Nombre)" Sortable="true" />
+        <PropertyColumn Property="@(s => s.Ubicacion)" />
+        <PropertyColumn Property="@(s => s.Capacidad)" />
+        <TemplateColumn Title="Acciones">
+            <button class="btn btn-outline-secondary" @onclick="@(() => Eliminar(context))">Eliminar</button>
+            <button class="btn btn-outline-primary" @onclick="@(() => Editar(context))">Editar</button>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="_paginationState" />
+}
+
+@code {
+    private List<Sede>? _sedes;
+    private PaginationState _paginationState = new PaginationState { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sedes = await Repositorio.ObtenerSedes();
+    }
+
+    private void Editar(Sede sede)
+    {
+        Navigation.NavigateTo($"/sedes/editar/{sede.Id}");
+    }
+
+    private async Task Eliminar(Sede sede)
+    {
+        await Repositorio.EliminarSede(sede.Id);
+        _sedes = await Repositorio.ObtenerSedes();
+    }
+}

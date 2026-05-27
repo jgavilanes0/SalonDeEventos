@@ -1,0 +1,83 @@
+@page "/servicios/nuevo"
+@page "/servicios/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorioServicios Repositorio
+@inject NavigationManager Navigation
+
+@if (_error)
+{
+    <div class="alert alert-danger">
+        <h2>El servicio que intenta editar no se encuentra registrado</h2>
+    </div>
+    <button class="btn btn-danger" @onclick="Regresar">Regresar</button>
+}
+else
+{
+    <EditForm Model="_servicio" FormName="frmServicio" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <div class="row align-items-center">
+            <div class="col col-2">
+                <label for="txtNombre" class="col-form-label">Nombre</label>
+            </div>
+            <div class="col col-10">
+                <InputText class="form-control" id="txtNombre" @bind-Value="_servicio.Nombre" />
+                <ValidationMessage For="@(() => _servicio.Nombre)" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtPrecio" class="col-form-label">Precio unitario</label>
+            </div>
+            <div class="col col-10">
+                <InputNumber class="form-control" id="txtPrecio" @bind-Value="_servicio.PrecioUnitario" />
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <button class="btn btn-primary me-3" type="submit">Guardar</button>
+                <button class="btn btn-danger" @onclick="Regresar">Cancelar</button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Servicio _servicio = new();
+    private bool _error = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            var servicio = await Repositorio.ObtenerServicioPorId(Id);
+            if (servicio != null)
+            {
+                _servicio = servicio;
+            }
+            else
+            {
+                _error = true;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id > 0)
+        {
+            await Repositorio.ActualizarServicio(Id, _servicio);
+        }
+        else
+        {
+            await Repositorio.AgregarServicio(_servicio);
+        }
+        Navigation.NavigateTo("/servicios");
+    }
+
+    private void Regresar()
+    {
+        Navigation.NavigateTo("/servicios");
+    }
+}

@@ -1,0 +1,54 @@
+@page "/mobiliarios"
+@rendermode InteractiveServer
+@inject IRepositorioMobiliarios Repositorio
+@inject NavigationManager Navigation
+<PageTitle>Mobiliario</PageTitle>
+<h3>Listado de mobiliario</h3>
+<button class="btn btn-primary mb-3" @onclick="@(() => Navigation.NavigateTo("/mobiliarios/nuevo"))">Nuevo mobiliario</button>
+
+@if (_mobiliarios == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else if (_mobiliarios.Count == 0)
+{
+    <div class="alert alert-info">
+        <h2>No se encuentra registrado mobiliario</h2>
+    </div>
+}
+else
+{
+    <QuickGrid Items="_mobiliarios.AsQueryable()" Class="table table-striped" Pagination="_paginationState">
+        <PropertyColumn Property="@(m => m.Nombre)" Sortable="true" />
+        <PropertyColumn Property="@(m => m.CantidadTotal)" Title="Cantidad total" />
+        <PropertyColumn Property="@(m => m.CantidadDisponible)" Title="Cantidad disponible" />
+        <TemplateColumn Title="Acciones">
+            <button class="btn btn-outline-secondary" @onclick="@(() => Eliminar(context))">Eliminar</button>
+            <button class="btn btn-outline-primary" @onclick="@(() => Editar(context))">Editar</button>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="_paginationState" />
+}
+
+@code {
+    private List<Mobiliario>? _mobiliarios;
+    private PaginationState _paginationState = new PaginationState { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _mobiliarios = await Repositorio.ObtenerMobiliarios();
+    }
+
+    private void Editar(Mobiliario mobiliario)
+    {
+        Navigation.NavigateTo($"/mobiliarios/editar/{mobiliario.Id}");
+    }
+
+    private async Task Eliminar(Mobiliario mobiliario)
+    {
+        await Repositorio.EliminarMobiliario(mobiliario.Id);
+        _mobiliarios = await Repositorio.ObtenerMobiliarios();
+    }
+}

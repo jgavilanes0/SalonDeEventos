@@ -1,0 +1,119 @@
+@page "/eventos/nuevo"
+@page "/eventos/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorioEventos Repositorio
+@inject IRepositorioClientes RepositorioClientes
+@inject IRepositorioSedes RepositorioSedes
+@inject NavigationManager Navigation
+
+@if (_error)
+{
+    <div class="alert alert-danger">
+        <h2>El evento que intenta editar no se encuentra registrado</h2>
+    </div>
+    <button class="btn btn-danger" @onclick="Regresar">Regresar</button>
+}
+else
+{
+    <EditForm Model="_evento" FormName="frmEvento" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <div class="row align-items-center">
+            <div class="col col-2">
+                <label for="txtFecha" class="col-form-label">Fecha</label>
+            </div>
+            <div class="col col-10">
+                <InputDate class="form-control" id="txtFecha" @bind-Value="_evento.Fecha" />
+                <ValidationMessage For="@(() => _evento.Fecha)" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtTipoEvento" class="col-form-label">Tipo de evento</label>
+            </div>
+            <div class="col col-10">
+                <InputText class="form-control" id="txtTipoEvento" @bind-Value="_evento.TipoEvento" />
+                <ValidationMessage For="@(() => _evento.TipoEvento)" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="ddlCliente" class="col-form-label">Cliente</label>
+            </div>
+            <div class="col col-10">
+                <InputSelect class="form-select" id="ddlCliente" @bind-Value="_evento.ClienteId">
+                    <option value="0">Seleccione un cliente</option>
+                    @foreach (var cliente in _clientes)
+                    {
+                        <option value="@cliente.Id">@cliente.NombreFestejado</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="ddlSede" class="col-form-label">Sede</label>
+            </div>
+            <div class="col col-10">
+                <InputSelect class="form-select" id="ddlSede" @bind-Value="_evento.SedeId">
+                    <option value="0">Seleccione una sede</option>
+                    @foreach (var sede in _sedes)
+                    {
+                        <option value="@sede.Id">@sede.Nombre</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <button class="btn btn-primary me-3" type="submit">Guardar</button>
+                <button class="btn btn-danger" @onclick="Regresar">Cancelar</button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Evento _evento = new();
+    private bool _error = false;
+    private List<Cliente> _clientes = new();
+    private List<Sede> _sedes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _clientes = await RepositorioClientes.ObtenerClientes();
+        _sedes = await RepositorioSedes.ObtenerSedes();
+
+        if (Id > 0)
+        {
+            var evento = await Repositorio.ObtenerEventoPorId(Id);
+            if (evento != null)
+            {
+                _evento = evento;
+            }
+            else
+            {
+                _error = true;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id > 0)
+        {
+            await Repositorio.ActualizarEvento(Id, _evento);
+        }
+        else
+        {
+            await Repositorio.AgregarEvento(_evento);
+        }
+        Navigation.NavigateTo("/eventos");
+    }
+
+    private void Regresar()
+    {
+        Navigation.NavigateTo("/eventos");
+    }
+}

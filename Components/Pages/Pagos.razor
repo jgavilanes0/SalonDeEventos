@@ -1,0 +1,55 @@
+@page "/pagos"
+@rendermode InteractiveServer
+@inject IRepositorioPagos Repositorio
+@inject NavigationManager Navigation
+<PageTitle>Pagos</PageTitle>
+<h3>Listado de pagos</h3>
+<button class="btn btn-primary mb-3" @onclick="@(() => Navigation.NavigateTo("/pagos/nuevo"))">Nuevo pago</button>
+
+@if (_pagos == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else if (_pagos.Count == 0)
+{
+    <div class="alert alert-info">
+        <h2>No se encuentran registrados pagos</h2>
+    </div>
+}
+else
+{
+    <QuickGrid Items="_pagos.AsQueryable()" Class="table table-striped" Pagination="_paginationState">
+        <PropertyColumn Property="@(p => p.Estado)" Sortable="true" />
+        <PropertyColumn Property="@(p => p.MontoTotal)" Title="Monto total" />
+        <PropertyColumn Property="@(p => p.Anticipo)" />
+        <PropertyColumn Property="@(p => p.Evento!.TipoEvento)" Title="Evento" Sortable="true" />
+        <TemplateColumn Title="Acciones">
+            <button class="btn btn-outline-secondary" @onclick="@(() => Eliminar(context))">Eliminar</button>
+            <button class="btn btn-outline-primary" @onclick="@(() => Editar(context))">Editar</button>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="_paginationState" />
+}
+
+@code {
+    private List<Pago>? _pagos;
+    private PaginationState _paginationState = new PaginationState { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _pagos = await Repositorio.ObtenerPagos();
+    }
+
+    private void Editar(Pago pago)
+    {
+        Navigation.NavigateTo($"/pagos/editar/{pago.Id}");
+    }
+
+    private async Task Eliminar(Pago pago)
+    {
+        await Repositorio.EliminarPago(pago.Id);
+        _pagos = await Repositorio.ObtenerPagos();
+    }
+}

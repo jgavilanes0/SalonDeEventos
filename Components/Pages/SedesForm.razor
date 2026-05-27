@@ -1,0 +1,92 @@
+@page "/sedes/nueva"
+@page "/sedes/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorioSedes Repositorio
+@inject NavigationManager Navigation
+
+@if (_error)
+{
+    <div class="alert alert-danger">
+        <h2>La sede que intenta editar no se encuentra registrada</h2>
+    </div>
+    <button class="btn btn-danger" @onclick="Regresar">Regresar</button>
+}
+else
+{
+    <EditForm Model="_sede" FormName="frmSede" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <div class="row align-items-center">
+            <div class="col col-2">
+                <label for="txtNombre" class="col-form-label">Nombre</label>
+            </div>
+            <div class="col col-10">
+                <InputText class="form-control" id="txtNombre" @bind-Value="_sede.Nombre" />
+                <ValidationMessage For="@(() => _sede.Nombre)" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtUbicacion" class="col-form-label">Ubicación</label>
+            </div>
+            <div class="col col-10">
+                <InputText class="form-control" id="txtUbicacion" @bind-Value="_sede.Ubicacion" />
+                <ValidationMessage For="@(() => _sede.Ubicacion)" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtCapacidad" class="col-form-label">Capacidad</label>
+            </div>
+            <div class="col col-10">
+                <InputNumber class="form-control" id="txtCapacidad" @bind-Value="_sede.Capacidad" />
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <button class="btn btn-primary me-3" type="submit">Guardar</button>
+                <button class="btn btn-danger" @onclick="Regresar">Cancelar</button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Sede _sede = new();
+    private bool _error = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            var sede = await Repositorio.ObtenerSedePorId(Id);
+            if (sede != null)
+            {
+                _sede = sede;
+            }
+            else
+            {
+                _error = true;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id > 0)
+        {
+            await Repositorio.ActualizarSede(Id, _sede);
+        }
+        else
+        {
+            await Repositorio.AgregarSede(_sede);
+        }
+        Navigation.NavigateTo("/sedes");
+    }
+
+    private void Regresar()
+    {
+        Navigation.NavigateTo("/sedes");
+    }
+}

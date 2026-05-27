@@ -1,0 +1,91 @@
+@page "/mobiliarios/nuevo"
+@page "/mobiliarios/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorioMobiliarios Repositorio
+@inject NavigationManager Navigation
+
+@if (_error)
+{
+    <div class="alert alert-danger">
+        <h2>El mobiliario que intenta editar no se encuentra registrado</h2>
+    </div>
+    <button class="btn btn-danger" @onclick="Regresar">Regresar</button>
+}
+else
+{
+    <EditForm Model="_mobiliario" FormName="frmMobiliario" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <div class="row align-items-center">
+            <div class="col col-2">
+                <label for="txtNombre" class="col-form-label">Nombre</label>
+            </div>
+            <div class="col col-10">
+                <InputText class="form-control" id="txtNombre" @bind-Value="_mobiliario.Nombre" />
+                <ValidationMessage For="@(() => _mobiliario.Nombre)" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtCantidadTotal" class="col-form-label">Cantidad total</label>
+            </div>
+            <div class="col col-10">
+                <InputNumber class="form-control" id="txtCantidadTotal" @bind-Value="_mobiliario.CantidadTotal" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtCantidadDisponible" class="col-form-label">Cantidad disponible</label>
+            </div>
+            <div class="col col-10">
+                <InputNumber class="form-control" id="txtCantidadDisponible" @bind-Value="_mobiliario.CantidadDisponible" />
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <button class="btn btn-primary me-3" type="submit">Guardar</button>
+                <button class="btn btn-danger" @onclick="Regresar">Cancelar</button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Mobiliario _mobiliario = new();
+    private bool _error = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            var mobiliario = await Repositorio.ObtenerMobiliarioPorId(Id);
+            if (mobiliario != null)
+            {
+                _mobiliario = mobiliario;
+            }
+            else
+            {
+                _error = true;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id > 0)
+        {
+            await Repositorio.ActualizarMobiliario(Id, _mobiliario);
+        }
+        else
+        {
+            await Repositorio.AgregarMobiliario(_mobiliario);
+        }
+        Navigation.NavigateTo("/mobiliarios");
+    }
+
+    private void Regresar()
+    {
+        Navigation.NavigateTo("/mobiliarios");
+    }
+}

@@ -1,0 +1,84 @@
+@page "/clientes/nuevo"
+@page "/clientes/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorioClientes Repositorio
+@inject NavigationManager Navigation
+
+@if (_error)
+{
+    <div class="alert alert-danger">
+        <h2>El cliente que intenta editar no se encuentra registrado</h2>
+    </div>
+    <button class="btn btn-danger" @onclick="Regresar">Regresar</button>
+}
+else
+{
+    <EditForm Model="_cliente" FormName="frmCliente" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <div class="row align-items-center">
+            <div class="col col-2">
+                <label for="txtNombre" class="col-form-label">Nombre del festejado</label>
+            </div>
+            <div class="col col-10">
+                <InputText class="form-control" id="txtNombre" @bind-Value="_cliente.NombreFestejado" />
+                <ValidationMessage For="@(() => _cliente.NombreFestejado)" />
+            </div>
+        </div>
+        <div class="row mt-3 align-items-center">
+            <div class="col col-2">
+                <label for="txtTelefono" class="col-form-label">Teléfono</label>
+            </div>
+            <div class="col col-10">
+                <InputText class="form-control" id="txtTelefono" @bind-Value="_cliente.Telefono" />
+                <ValidationMessage For="@(() => _cliente.Telefono)" />
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <button class="btn btn-primary me-3" type="submit">Guardar</button>
+                <button class="btn btn-danger" @onclick="Regresar">Cancelar</button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Cliente _cliente = new();
+    private bool _error = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            var cliente = await Repositorio.ObtenerClientePorId(Id);
+            if (cliente != null)
+            {
+                _cliente = cliente;
+            }
+            else
+            {
+                _error = true;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id > 0)
+        {
+            await Repositorio.ActualizarCliente(Id, _cliente);
+        }
+        else
+        {
+            await Repositorio.AgregarCliente(_cliente);
+        }
+        Navigation.NavigateTo("/clientes");
+    }
+
+    private void Regresar()
+    {
+        Navigation.NavigateTo("/clientes");
+    }
+}
