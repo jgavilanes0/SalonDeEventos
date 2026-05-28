@@ -4,6 +4,8 @@
 @inject IRepositorioEventos Repositorio
 @inject IRepositorioClientes RepositorioClientes
 @inject IRepositorioSedes RepositorioSedes
+@inject IRepositorioMobiliarios RepositorioMobiliarios
+@inject IRepositorioServicios RepositorioServicios
 @inject NavigationManager Navigation
 
 @if (_error)
@@ -15,75 +17,135 @@
 }
 else
 {
+    @if (!string.IsNullOrEmpty(_mensajeValidacion))
+    {
+        <div class="alert alert-warning">
+            <strong>Atención:</strong> @_mensajeValidacion
+        </div>
+    }
+
     <EditForm Model="_evento" FormName="frmEvento" OnValidSubmit="Guardar">
         <DataAnnotationsValidator />
+
+        @* SECCIÓN DATOS GENERALES *@
         <div class="row align-items-center">
-            <div class="col col-2">
-                <label for="txtFecha" class="col-form-label">Fecha</label>
-            </div>
+            <div class="col col-2"><label class="col-form-label">Fecha</label></div>
             <div class="col col-10">
-                <InputDate class="form-control" id="txtFecha" @bind-Value="_evento.Fecha" />
+                <InputDate class="form-control" @bind-Value="_evento.Fecha" />
                 <ValidationMessage For="@(() => _evento.Fecha)" />
             </div>
         </div>
         <div class="row mt-3 align-items-center">
-            <div class="col col-2">
-                <label for="txtTipoEvento" class="col-form-label">Tipo de evento</label>
-            </div>
+            <div class="col col-2"><label class="col-form-label">Tipo de evento</label></div>
             <div class="col col-10">
-                <InputText class="form-control" id="txtTipoEvento" @bind-Value="_evento.TipoEvento" />
+                <InputText class="form-control" @bind-Value="_evento.TipoEvento" />
                 <ValidationMessage For="@(() => _evento.TipoEvento)" />
             </div>
         </div>
         <div class="row mt-3 align-items-center">
-            <div class="col col-2">
-                <label for="ddlCliente" class="col-form-label">Cliente</label>
-            </div>
+            <div class="col col-2"><label class="col-form-label">Cliente</label></div>
             <div class="col col-10">
-                <InputSelect class="form-select" id="ddlCliente" @bind-Value="_evento.ClienteId">
+                <InputSelect class="form-select" @bind-Value="_evento.ClienteId">
                     <option value="0">Seleccione un cliente</option>
-                    @foreach (var cliente in _clientes)
+                    @foreach (var c in _clientes)
                     {
-                        <option value="@cliente.Id">@cliente.NombreFestejado</option>
+                        <option value="@c.Id">@c.NombreFestejado</option>
                     }
                 </InputSelect>
             </div>
         </div>
         <div class="row mt-3 align-items-center">
-            <div class="col col-2">
-                <label for="ddlSede" class="col-form-label">Sede</label>
-            </div>
+            <div class="col col-2"><label class="col-form-label">Sede</label></div>
             <div class="col col-10">
-                <InputSelect class="form-select" id="ddlSede" @bind-Value="_evento.SedeId">
+                <InputSelect class="form-select" @bind-Value="_evento.SedeId">
                     <option value="0">Seleccione una sede</option>
-                    @foreach (var sede in _sedes)
+                    @foreach (var s in _sedes)
                     {
-                        <option value="@sede.Id">@sede.Nombre</option>
+                        <option value="@s.Id">@s.Nombre</option>
                     }
                 </InputSelect>
             </div>
         </div>
-        <div class="row mt-3">
+
+        @* SECCIÓN MOBILIARIO *@
+        <h4 class="mt-5 mb-3 text-secondary border-bottom pb-2">Mobiliario Requerido</h4>
+        <div class="row">
+            @foreach (var item in _listaMobiliario)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">@item.Nombre</h5>
+                            <p class="text-muted small">Disponibles: @item.CantidadDisponible</p>
+                            <InputNumber class="form-control" @bind-Value="item.CantidadReservada" min="0" max="@item.CantidadDisponible" />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* SECCIÓN SERVICIOS *@
+        <h4 class="mt-4 mb-3 text-secondary border-bottom pb-2">Servicios del Evento</h4>
+        <div class="row">
+            @foreach (var serv in _listaServicios)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card border-info">
+                        <div class="card-body">
+                            <h5 class="card-title">@serv.Nombre</h5>
+                            <p class="text-info small">Precio: @serv.PrecioUnitario.ToString("C")</p>
+                            <label class="small">Cantidad de personal/servicios:</label>
+                            <InputNumber class="form-control" @bind-Value="serv.Cantidad" min="0" />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="row mt-4 mb-5">
             <div class="col">
-                <button class="btn btn-primary me-3" type="submit">Guardar</button>
-                <button class="btn btn-danger" @onclick="Regresar">Cancelar</button>
+                <button class="btn btn-primary btn-lg me-3" type="submit">Guardar Cambios</button>
+                <button class="btn btn-danger btn-lg" @onclick="Regresar">Cancelar</button>
             </div>
         </div>
     </EditForm>
 }
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+    [Parameter] public int Id { get; set; }
     private Evento _evento = new();
     private bool _error = false;
+    private string? _mensajeValidacion;
+
     private List<Cliente> _clientes = new();
     private List<Sede> _sedes = new();
+    private List<MobiliarioSeleccion> _listaMobiliario = new();
+    private List<ServicioSeleccion> _listaServicios = new();
+
+    // Clases auxiliares para la interfaz
+    public class MobiliarioSeleccion
+    {
+        public int MobiliarioId { get; set; }
+        public string Nombre { get; set; } = "";
+        public int CantidadDisponible { get; set; }
+        public int CantidadReservada { get; set; }
+    }
+
+    public class ServicioSeleccion
+    {
+        public int ServicioId { get; set; }
+        public string Nombre { get; set; } = "";
+        public decimal PrecioUnitario { get; set; }
+        public int Cantidad { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         _clientes = await RepositorioClientes.ObtenerClientes();
         _sedes = await RepositorioSedes.ObtenerSedes();
+
+        var mobsBD = await RepositorioMobiliarios.ObtenerMobiliarios();
+        var servsBD = await RepositorioServicios.ObtenerServicios();
 
         if (Id > 0)
         {
@@ -91,29 +153,53 @@ else
             if (evento != null)
             {
                 _evento = evento;
+                // Cargar Mobiliario
+                foreach (var m in mobsBD)
+                {
+                    var reservado = _evento.EventoMobiliarios?.FirstOrDefault(x => x.MobiliarioId == m.Id)?.CantidadReservada ?? 0;
+                    _listaMobiliario.Add(new MobiliarioSeleccion { MobiliarioId = m.Id, Nombre = m.Nombre, CantidadDisponible = m.CantidadDisponible + reservado, CantidadReservada = reservado });
+                }
+                // Cargar Servicios
+                foreach (var s in servsBD)
+                {
+                    var cant = _evento.EventoServicios?.FirstOrDefault(x => x.ServicioId == s.Id)?.Cantidad ?? 0;
+                    _listaServicios.Add(new ServicioSeleccion { ServicioId = s.Id, Nombre = s.Nombre, PrecioUnitario = s.PrecioUnitario, Cantidad = cant });
+                }
             }
-            else
-            {
-                _error = true;
-            }
+            else { _error = true; }
+        }
+        else
+        {
+            _evento.Fecha = DateTime.Today;
+            foreach (var m in mobsBD) _listaMobiliario.Add(new MobiliarioSeleccion { MobiliarioId = m.Id, Nombre = m.Nombre, CantidadDisponible = m.CantidadDisponible, CantidadReservada = 0 });
+            foreach (var s in servsBD) _listaServicios.Add(new ServicioSeleccion { ServicioId = s.Id, Nombre = s.Nombre, PrecioUnitario = s.PrecioUnitario, Cantidad = 0 });
         }
     }
 
     private async Task Guardar()
     {
-        if (Id > 0)
+        _mensajeValidacion = null;
+
+        if (_evento.SedeId <= 0) { _mensajeValidacion = "Selecciona una Sede."; return; }
+
+        if (await Repositorio.ExisteEventoEnSedeYFecha(_evento.SedeId, _evento.Fecha, Id))
         {
-            await Repositorio.ActualizarEvento(Id, _evento);
+            _mensajeValidacion = "La sede ya está ocupada en esa fecha."; return;
         }
-        else
-        {
-            await Repositorio.AgregarEvento(_evento);
-        }
+
+        // Mapear Mobiliario
+        _evento.EventoMobiliarios = _listaMobiliario.Where(x => x.CantidadReservada > 0)
+            .Select(x => new EventoMobiliario { MobiliarioId = x.MobiliarioId, CantidadReservada = x.CantidadReservada }).ToList();
+
+        // Mapear Servicios
+        _evento.EventoServicios = _listaServicios.Where(x => x.Cantidad > 0)
+            .Select(x => new EventoServicio { ServicioId = x.ServicioId, Cantidad = x.Cantidad }).ToList();
+
+        if (Id > 0) await Repositorio.ActualizarEvento(Id, _evento);
+        else await Repositorio.AgregarEvento(_evento);
+
         Navigation.NavigateTo("/eventos");
     }
 
-    private void Regresar()
-    {
-        Navigation.NavigateTo("/eventos");
-    }
+    private void Regresar() => Navigation.NavigateTo("/eventos");
 }

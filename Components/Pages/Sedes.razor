@@ -3,8 +3,17 @@
 @inject IRepositorioSedes Repositorio
 @inject NavigationManager Navigation
 <PageTitle>Sedes</PageTitle>
+
 <h3>Listado de sedes</h3>
-<button class="btn btn-primary mb-3" @onclick="@(() => Navigation.NavigateTo("/sedes/nueva"))">Nueva sede</button>
+<button class="btn btn-primary mb-3" @onclick='@(() => Navigation.NavigateTo("/sedes/nueva"))'>Nueva sede</button>
+
+@if (!string.IsNullOrEmpty(_mensajeError))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error:</strong> @_mensajeError
+        <button type="button" class="btn-close" @onclick="CerrarAlerta"></button>
+    </div>
+}
 
 @if (_sedes == null)
 {
@@ -35,6 +44,7 @@ else
 @code {
     private List<Sede>? _sedes;
     private PaginationState _paginationState = new PaginationState { ItemsPerPage = 5 };
+    private string? _mensajeError; // Variable para guardar el mensaje de error
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,7 +58,21 @@ else
 
     private async Task Eliminar(Sede sede)
     {
-        await Repositorio.EliminarSede(sede.Id);
-        _sedes = await Repositorio.ObtenerSedes();
+        try
+        {
+            _mensajeError = null; // Limpiamos errores anteriores
+            await Repositorio.EliminarSede(sede.Id);
+            _sedes = await Repositorio.ObtenerSedes(); // Si se borró bien, actualizamos la tabla
+        }
+        catch (Exception ex)
+        {
+            // Atrapamos la excepción del repositorio y la mostramos en pantalla
+            _mensajeError = ex.Message;
+        }
+    }
+
+    private void CerrarAlerta()
+    {
+        _mensajeError = null;
     }
 }

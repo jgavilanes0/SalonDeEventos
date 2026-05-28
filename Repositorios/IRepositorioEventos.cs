@@ -9,5 +9,6 @@ namespace SalonEventos.Repositorios
         Task<Evento?> ObtenerEventoPorId(int id);
         Task ActualizarEvento(int id, Evento evento);
         Task EliminarEvento(int id);
+        Task<bool> ExisteEventoEnSedeYFecha(int sedeId, DateTime fecha, int eventoIdExcluir);
     }
 }
