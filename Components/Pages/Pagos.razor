@@ -27,7 +27,6 @@ else
         <PropertyColumn Property="@(p => p.Evento!.TipoEvento)" Title="Evento" Sortable="true" />
         <TemplateColumn Title="Acciones">
             <button class="btn btn-outline-secondary" @onclick="@(() => Eliminar(context))">Eliminar</button>
-            <button class="btn btn-outline-primary" @onclick="@(() => Editar(context))">Editar</button>
         </TemplateColumn>
     </QuickGrid>
     <Paginator State="_paginationState" />
@@ -42,10 +41,6 @@ else
         _pagos = await Repositorio.ObtenerPagos();
     }
 
-    private void Editar(Pago pago)
-    {
-        Navigation.NavigateTo($"/pagos/editar/{pago.Id}");
-    }
 
     private async Task Eliminar(Pago pago)
     {
