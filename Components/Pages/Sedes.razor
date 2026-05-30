@@ -43,7 +43,7 @@ else
 @code {
     private List<Sede>? _sedes;
     private PaginationState _paginationState = new PaginationState { ItemsPerPage = 5 };
-    private string? _mensajeError; // Variable para guardar el mensaje de error
+    private string? _mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -55,13 +55,13 @@ else
     {
         try
         {
-            _mensajeError = null; // Limpiamos errores anteriores
+            _mensajeError = null; 
             await Repositorio.EliminarSede(sede.Id);
-            _sedes = await Repositorio.ObtenerSedes(); // Si se borró bien, actualizamos la tabla
+            _sedes = await Repositorio.ObtenerSedes(); 
         }
         catch (Exception ex)
         {
-            // Atrapamos la excepción del repositorio y la mostramos en pantalla
+
             _mensajeError = ex.Message;
         }
     }

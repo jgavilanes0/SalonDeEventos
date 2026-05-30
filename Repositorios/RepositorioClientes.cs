@@ -37,16 +37,16 @@ namespace SalonEventos.Repositorios
 
         public async Task EliminarCliente(int id)
         {
-            // NUEVO CANDADO: Revisar si existen eventos ligados a este cliente
+            liente
             bool tieneEventos = await _context.Eventos.AnyAsync(e => e.ClienteId == id);
 
             if (tieneEventos)
             {
-                // Si tiene eventos, detenemos el proceso y lanzamos la alerta
+                lerta
                 throw new Exception("No se puede eliminar este Cliente porque aún tiene Eventos registrados a su nombre. Por favor, elimina primero sus eventos.");
             }
 
-            // Si pasa la validación, borra al cliente de forma segura
+            
             await _context.Clientes.Where(c => c.Id == id).ExecuteDeleteAsync();
             await _context.SaveChangesAsync();
         }

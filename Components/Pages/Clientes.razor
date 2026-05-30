@@ -42,7 +42,7 @@ else
 @code {
     private List<Cliente>? _clientes;
     private PaginationState _paginationState = new PaginationState { ItemsPerPage = 5 };
-    private string? _mensajeError; // Variable para guardar el error
+    private string? _mensajeError; 
 
     protected override async Task OnInitializedAsync()
     {
@@ -53,13 +53,13 @@ else
     {
         try
         {
-            _mensajeError = null; // Limpiamos errores anteriores
+            _mensajeError = null; 
             await Repositorio.EliminarCliente(cliente.Id);
-            _clientes = await Repositorio.ObtenerClientes(); // Actualizamos la tabla
+            _clientes = await Repositorio.ObtenerClientes();
         }
         catch (Exception ex)
         {
-            // Atrapamos la excepción del repositorio y la mostramos en pantalla
+w
             _mensajeError = ex.Message;
         }
     }

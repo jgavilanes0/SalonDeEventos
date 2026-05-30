@@ -38,16 +38,16 @@ namespace SalonEventos.Repositorios
 
         public async Task EliminarSede(int id)
         {
-            // NUEVO CANDADO: Revisar si existen eventos ligados a esta sede
+            
             bool tieneEventos = await _context.Eventos.AnyAsync(e => e.SedeId == id);
 
             if (tieneEventos)
             {
-                // Si tiene eventos, detenemos el proceso y lanzamos este error
+                
                 throw new Exception("No se puede eliminar esta Sede porque aún tiene Eventos registrados. Por favor, elimina primero los eventos de esta sede.");
             }
 
-            // Si pasa la validación, borra la sede de forma segura
+            
             await _context.Sedes.Where(s => s.Id == id).ExecuteDeleteAsync();
             await _context.SaveChangesAsync();
         }

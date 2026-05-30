@@ -9,7 +9,7 @@ namespace SalonEventos.Repositorios
 
         public async Task AgregarEvento(Evento evento)
         {
-            // 1. Restar el mobiliario de la bodega
+            
             if (evento.EventoMobiliarios != null)
             {
                 foreach (var em in evento.EventoMobiliarios)
@@ -19,7 +19,7 @@ namespace SalonEventos.Repositorios
                 }
             }
 
-            // El Entity Framework detectará automáticamente los EventoServicios añadidos al objeto evento
+            
             await _context.Eventos.AddAsync(evento);
             await _context.SaveChangesAsync();
         }
@@ -39,7 +39,7 @@ namespace SalonEventos.Repositorios
                 .Include(e => e.Cliente)
                 .Include(e => e.Sede)
                 .Include(e => e.EventoMobiliarios)
-                .Include(e => e.EventoServicios) // <-- Incluimos los servicios
+                .Include(e => e.EventoServicios) 
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
@@ -47,12 +47,12 @@ namespace SalonEventos.Repositorios
         {
             var eventoExistente = await _context.Eventos
                 .Include(e => e.EventoMobiliarios)
-                .Include(e => e.EventoServicios) // <-- Incluimos los servicios
+                .Include(e => e.EventoServicios) 
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (eventoExistente == null) throw new Exception("Evento no encontrado");
 
-            // --- LÓGICA DE MOBILIARIO (Inventario) ---
+            
             if (eventoExistente.EventoMobiliarios != null)
             {
                 foreach (var emViejo in eventoExistente.EventoMobiliarios)
@@ -62,13 +62,13 @@ namespace SalonEventos.Repositorios
                 }
             }
 
-            // --- ACTUALIZAR DATOS BÁSICOS ---
+            
             eventoExistente.Fecha = evento.Fecha;
             eventoExistente.TipoEvento = evento.TipoEvento;
             eventoExistente.ClienteId = evento.ClienteId;
             eventoExistente.SedeId = evento.SedeId;
 
-            // --- ACTUALIZAR MOBILIARIO (Relación) ---
+            
             eventoExistente.EventoMobiliarios!.Clear();
             if (evento.EventoMobiliarios != null)
             {
@@ -84,7 +84,7 @@ namespace SalonEventos.Repositorios
                 }
             }
 
-            // --- ACTUALIZAR SERVICIOS (Relación N:M) ---
+            
             eventoExistente.EventoServicios!.Clear();
             if (evento.EventoServicios != null)
             {
